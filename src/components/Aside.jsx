@@ -43,7 +43,7 @@ const Aside = () => {
     //   links.push({ href: "/documents", lable: "Upload documnets", icon: "bx bxs-file-doc" })
   
     //   }
-    // links.push({ href: "/applications", lable: "Send Application", icon: "bx bxs-edit-alt" })
+    links.push({ href: "/salary", lable: "Salary", icon: "bx bxs-file-doc" })
 
  
     setNavLinks(links)

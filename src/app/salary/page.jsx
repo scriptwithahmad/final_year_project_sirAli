@@ -10,10 +10,11 @@ import { useContext } from "react";
 import { AuthContext } from "@/src/context/AuthContext";
 
 const tableHeader = [
-  { lable: "Name", align: "text-left" },
-  { lable: "Department", align: "text-left" },
-  { lable: "Employee Role", align: "text-center" },
-  { lable: "Phone", align: "text-left" },
+  { lable: "Employee Details", align: "text-left" },
+  { lable: "Deduction", align: "text-left" },
+  { lable: "Overtime", align: "text-left" },
+  { lable: "Payment Method", align: "text-left" },
+  { lable: "Bonus Given", align: "text-left" },
 ];
 
 const UserTable = () => {
@@ -31,9 +32,9 @@ const UserTable = () => {
     ["employees", filters],
     async () => {
       var res = await axios.get(
-        `/api/employees?${queryString.stringify(filters)}`
+        `/api/salary?${queryString.stringify(filters)}`
       );
-      return res.data.message;
+      return res?.data?.message;
     }
   );
 
@@ -53,19 +54,19 @@ const UserTable = () => {
   const [formData, setFormData] = useState({
     isbonusgiven: false,
     allowancefrequency: "",
-    paymentMethod:"",
-    NoOfdeduction:"",
-    overtimeHour:""
-
+    paymentMethod: "",
+    NoOfdeduction: "",
+    overtimeHour: "",
+    deductiontype: "",
   });
 
   const resetForm = () => {
     setFormData({
       isbonusgiven: false,
-    allowancefrequency: "",
-    paymentMethod:"",
-    NoOfdeduction:"",
-    overtimeHour:""
+      allowancefrequency: "",
+      paymentMethod: "",
+      NoOfdeduction: "",
+      overtimeHour: "",
     });
 
     setFormMode("create");
@@ -96,6 +97,11 @@ const UserTable = () => {
       name: "overtimeHour",
       type: "number",
     },
+    {
+      lable: "Deduction Type",
+      name: "deductiontype",
+      type: "",
+    },
   ];
 
   const changeHandler = (e) => {
@@ -109,7 +115,6 @@ const UserTable = () => {
       setFormData({ ...formData, [name]: value });
     }
   };
- 
 
   const addNewItemHandle = async (e) => {
     e.preventDefault();
@@ -117,31 +122,31 @@ const UserTable = () => {
     try {
       setFormLoading(true);
 
-      const imgUrl = tempImage
-        ? await uploadImageToCloudinary()
-        : formData.photo;
-
       var res;
 
       if (formMode == "create") {
-        res = await axios.post(`/api/employees`, {
+        res = await axios.post(`/api/salary`, {
           ...formData,
-          photo: imgUrl,
-          isApproved: true,
+          employee: user._id,
         });
         if (res.data.success) {
           resetForm();
-          toast.success(res.data.message);
+          toast.success("Salary Doc Added!");
+          setTimeout(() => {
+            setShowForm(false);
+          }, 1000);
         }
       } else if (formMode == "update") {
-        res = await axios.put(`/api/employees/${formData._id}`, {
+        res = await axios.put(`/api/salary/${formData._id}`, {
           ...formData,
-          photo: imgUrl,
         });
         if (res.data.success) {
           // resetForm()
           setFormMode("read");
-          toast.success(res.data.message);
+          toast.success("Salary Doc Updated!");
+          setTimeout(() => {
+            setShowForm(false);
+          }, 1000);
         }
       }
     } catch (error) {
@@ -156,12 +161,8 @@ const UserTable = () => {
 
   // Get Single Item in Form Model in Read Only mode and After That there is Edit Button To Edit
   const showSingleItemDetail = (item) => {
-    item.joining_date = item.joining_date.substring(0, 10);
-    item.dob = item.dob.substring(0, 10);
-
-    window.document.getElementById("phone").value = item.phone;
-    window.document.getElementById("cnic").value = item.cnic;
-
+    // window.document.getElementById("phone").value = item.phone;
+    // window.document.getElementById("cnic").value = item.cnic;
     setFormMode("read");
     setShowForm(true);
     setFormData(item);
@@ -173,17 +174,18 @@ const UserTable = () => {
       return;
     }
     try {
-      var res = await axios.delete(`/api/employees/${id}`);
+      var res = await axios.delete(`/api/salary/${id}`);
       if (res.data.success) {
         toast.success(res.data.message);
+        refetch();
       }
     } catch (error) {
       toast.success("Something went wrong!");
     }
   };
+
   const users = useQuery(["users"], async () => {
     var res = await axios.get(`/api/employees`);
-    // console.log(res.data)
     return res.data.message;
   });
 
@@ -263,7 +265,7 @@ const UserTable = () => {
                       </tr>
                     );
                   })
-                : data.data?.map((v, i) => {
+                : data?.map((v, i) => {
                     return (
                       <tr
                         key={i}
@@ -275,29 +277,51 @@ const UserTable = () => {
                         >
                           <div className="w-8 h-8 border-gray-300 border mr-2 rounded-full overflow-hidden">
                             <img
+                              alt="image here"
                               className="w-full h-full object-cover"
-                              src={v.photo || "/images/user.png"}
-                              alt=""
+                              src={v?.employee?.photo || "/images/user.png"}
                             />
                           </div>
-                          {v.fullName}
+                          {v?.employee?.fullName}
                         </td>
 
-                        <td className={`px-6 py-2 ${tableHeader[1].align}`}>
-                          {v.designation}
+                        <td
+                          className={`px-6 text-gray-700 py-2 ${tableHeader[2].align}`}
+                        >
+                          <p>{v.deductiontype}</p>
                         </td>
-                        <td className={`px-6 py-2 ${tableHeader[2].align}`}>
-                          {v.department}
+                        <td
+                          className={`px-6 text-gray-700 py-2 ${tableHeader[2].align}`}
+                        >
+                          <p>{v.overtimeHour}</p>
                         </td>
-                        <td className={`px-6 py-2 ${tableHeader[3].align}`}>
-                          {v.phone}
+                        <td
+                          className={`px-6 text-gray-700 py-2 ${tableHeader[1].align}`}
+                        >
+                          {v.paymentMethod}
+                        </td>
+                        <td
+                          className={`px-6 text-gray-700 py-2 ${tableHeader[3].align}`}
+                        >
+                          {/* {v.isbonusgiven ? "Given" : "Not Given"} */}
+                          <span
+                            className={`rounded-full px-3 font-light ${
+                              v.isbonusgiven === true
+                                ? "bg-[#EEF7F2] text-[#05B651]"
+                                : v.isbonusgiven === false
+                                ? "bg-[#FAF0F0] text-[#F46A6A]"
+                                : ""
+                            }`}
+                          >
+                            {v.isbonusgiven ? "Given" : "Not Given"}
+                          </span>
                         </td>
 
                         {(user?.isAdmin || aType != "readOnly") && (
                           <td className="px-6 py-2 whitespace-nowrap  text-lg text-center">
                             <i
-                              onClick={() => showSingleItemDetail(v)}
                               title="Details"
+                              onClick={() => showSingleItemDetail(v)}
                               className="bx p-1 cursor-pointer hover:bg-gray-100 rounded-full  bx-detail text-indigo-600"
                             ></i>
 
@@ -369,8 +393,8 @@ const UserTable = () => {
 
             {formMode == "read" && (
               <i
-                onClick={() => setFormMode("update")}
                 title="Click to Edit"
+                onClick={() => setFormMode("update")}
                 className="bx text-gray-600 rounded-full p-2 text-2xl duration-200 cursor-pointer hover:bg-gray-100 absolute -bottom-14 right-6 bx-pencil"
               ></i>
             )}
@@ -419,8 +443,8 @@ const UserTable = () => {
                     >
                       {label}
                       <select
-                        value={formData[v.name]}
                         required
+                        value={formData[v.name]}
                         onChange={changeHandler}
                         // value={formData[v.name]}
                         name={v.name}
@@ -469,7 +493,6 @@ const UserTable = () => {
                     >
                       {label}
                       <input
-                        required
                         id={v.name}
                         value={formData[v.name]}
                         onChange={changeHandler}
@@ -484,47 +507,53 @@ const UserTable = () => {
                   break;
               }
             })}
+            <div className="borer border-black col-span-full">
+              <h2 className="font-medium text-sm text-gray-700 mb-2">
+                Deduction Type
+              </h2>
 
-            <div className="border-b px-4 py-2 bg-gray-100">
-              <input
-                type="checkbox"
-                onChange={changeHandler}
-                className="mr-2"
-                checked={formData.isbonusgiven}
-                name="isbonusgiven"
-                id="bounce"
-              />
-              <label htmlFor="bounce">Bounse Is given</label>
+              <div className="flex items-center gap-5">
+                <div className="border-b bg-gray-100 px-4 py-2 w-full">
+                  <input
+                    id="bounce"
+                    type="checkbox"
+                    name="isbonusgiven"
+                    onChange={changeHandler}
+                    className="mr-2 rounded-md"
+                    checked={formData.isbonusgiven}
+                  />
+                  <label htmlFor="bounce" className="text-gray-700 text-sm">
+                    Holiday
+                  </label>
+                </div>
+                <div className="border-b bg-gray-100 px-4 py-2 w-full">
+                  <input
+                    id="bounce"
+                    type="checkbox"
+                    name="isbonusgiven"
+                    onChange={changeHandler}
+                    className="mr-2 rounded-md"
+                    checked={formData.isbonusgiven}
+                  />
+                  <label htmlFor="bounce" className="text-gray-700 text-sm">
+                    Bounse Is given
+                  </label>
+                </div>
+              </div>
             </div>
-            
           </div>
-<div className="my-3 text-xl px-4">
-  <h3>Deduction Type</h3>
 
-
-          <div className="border-b px-4 py-2 bg-gray-100">
-              <input
-                type="checkbox"
-                onChange={changeHandler}
-                className="mr-2"
-                checked={formData.isbonusgiven}
-                name="isbonusgiven"
-                id="bounce"
-              />
-              <label htmlFor="bounce">Holiday</label>
-            </div>
-            </div>
-          <div className=" p-6 col-span-2">
-            <label htmlFor="">Send to participants</label>
+          {/* <div className=" p-6 col-span-2">
+            <label htmlFor="">Send to Participants</label>
             {users?.data?.data.map((v, i) => (
               <div key={i} className=" flex items-center gap-2">
                 <input
-                  type="radio"
-                  checked={formData.employee?.includes(v._id)}
-                  name="employee"
-                  value={v?._id}
-                  onChange={changeHandler}
                   id={v?._id}
+                  type="radio"
+                  value={v?._id}
+                  name="employee"
+                  onChange={changeHandler}
+                  checked={formData.employee?.includes(v._id)}
                 />
                 <label
                   htmlFor={v?._id}
@@ -534,8 +563,8 @@ const UserTable = () => {
                 </label>
               </div>
             ))}
-          </div>
-      
+          </div> */}
+          {/* Button here */}
           {formMode != "read" && (
             <div className="col-span-6 p-6 flex justify-end">
               <button

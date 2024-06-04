@@ -167,7 +167,7 @@ const UserTable = () => {
       name: "username",
       type: "text",
     },
-  
+
     {
       lable: "Password",
       name: "password",
@@ -473,15 +473,15 @@ const UserTable = () => {
                         {(user?.isAdmin || aType != "readOnly") && (
                           <td className="px-6 py-2 whitespace-nowrap  text-lg text-center">
                             <i
-                              onClick={() => showSingleItemDetail(v)}
                               title="Details"
+                              onClick={() => showSingleItemDetail(v)}
                               className="bx p-1 cursor-pointer hover:bg-gray-100 rounded-full  bx-detail text-indigo-600"
                             ></i>
 
                             {(user?.isAdmin || aType == "full") && (
                               <i
-                                onClick={() => deleteItem(v._id)}
                                 title="Delete"
+                                onClick={() => deleteItem(v._id)}
                                 className="bx p-1 cursor-pointer hover:bg-gray-100 rounded-full bx-trash text-red-600"
                               ></i>
                             )}
